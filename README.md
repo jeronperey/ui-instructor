@@ -1,73 +1,45 @@
-# React + TypeScript + Vite
+# AI Ed Innovations: Instructor UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite + TypeScript dashboard for instructors. It calls the AIEIC agents **directly** (there is no orchestrator):
 
-Currently, two official plugins are available:
+| Tab | Backed by | Env var |
+|---|---|---|
+| Lab Tasks, Lab Quiz | curriculum designer (`curriculum-designer` repo, port 8003) | `VITE_CURRICULUM_URL`, `VITE_LAB_ID` |
+| Student Submissions | assessment agent (`assessment_agent` repo, port 8000) | `VITE_ASSESSMENT_URL`, `VITE_ASSIGNMENT_ID` |
+| Statistics | hardcoded sample data | none |
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+If `VITE_ASSESSMENT_URL` is unset, or the assessment agent is unreachable, Student Submissions shows sample data and says so.
+The Student Activity and AI Overview tabs are commented out (see `src/App.tsx`); `src/api/agents.ts` is legacy code for an
+orchestrator that was never built.
 
-## React Compiler
+## Run
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+cp .env.example .env.local     # adjust URLs if your agents run elsewhere
+npm run dev                    # http://localhost:5173 (any login works for now)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Run the agents it talks to (each repo's README has details):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# curriculum designer: no model credentials needed in mock mode (the mock ignores chat feedback)
+cd ../curriculum-designer && LLM_BACKEND=mock python -m uvicorn main:app --port 8003
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# assessment agent: offline fake LLM provider plus seed data
+cd ../assessment_agent && cp demo/seed_results.json assessment_results.json
+DEFAULT_LLM_PROVIDER=fake python run.py
 ```
+
+The curriculum designer keeps labs **in memory**: restarting it empties the lab and the UI returns to its empty state.
+
+## Checks
+
+```bash
+npx tsc -b && npx eslint src && npm run build
+```
+There is no test runner yet. `npm run build` writes `dist/`, which is not ignored on `main` before this change set, so do not commit it.
+
+## Contributing
+Fork, branch from `main`, and open a PR. Comment out (do not delete) features that are being deactivated. No styling work
+for now; the look and feel comes later.

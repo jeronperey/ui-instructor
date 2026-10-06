@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './index.css';
-import { approveLab, generateLab, getLab, requestChanges, uploadMaterial } from './api/curriculum';
+import { approveLab, generateLab, getLab, requestChanges, uploadInstructions, uploadMaterial } from './api/curriculum';
 import type { LabMaterial } from './api/curriculum';
 import MaterialPreview from './tabs/MaterialPreview';
 import LabQuizPreview from './tabs/LabQuizPreview';
@@ -160,7 +160,13 @@ export default function App() {
       onUploaded={handleMaterialUploaded}
       onClose={() => setShowUploadMaterial(false)}
     />}
-    {showUploadAgent && <UploadAgentModal onClose={() => setShowUploadAgent(false)} />}
+    {showUploadAgent && (
+      <UploadAgentModal
+        labExists={lab !== null}
+        onSave={uploadInstructions}
+        onClose={() => setShowUploadAgent(false)}
+      />
+    )}
     {selectedStudent && (
       <StudentDetailModal
         studentName={selectedStudent}

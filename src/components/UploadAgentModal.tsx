@@ -2,20 +2,46 @@ import { useRef, useState } from 'react';
 import Modal from './Modal';
 
 interface Props {
+  /** The agent stores instructions on an existing lab, so a lab must be generated first. */
+  labExists: boolean;
+  onSave: (instructions: string) => Promise<void>;
   onClose: () => void;
 }
 
 type Mode = 'write' | 'file';
 
-export default function UploadAgentModal({ onClose }: Props) {
+export default function UploadAgentModal({ labExists, onSave, onClose }: Props) {
   const [mode, setMode] = useState<Mode>('write');
   const [instructions, setInstructions] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // The agent stores plain text, so only text files can be sent.
   function handleFiles(files: FileList | null) {
-    if (files && files[0]) setFile(files[0]);
+    const picked = files?.[0];
+    if (!picked) return;
+    if (!/\.(txt|md)$/i.test(picked.name)) {
+      setError('Only .txt and .md files are supported.');
+      return;
+    }
+    setError(null);
+    setFile(picked);
+  }
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(mode === 'write' ? instructions.trim() : (await file!.text()).trim());
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save the instructions.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -24,13 +50,18 @@ export default function UploadAgentModal({ onClose }: Props) {
     handleFiles(e.dataTransfer.files);
   }
 
-  const canSave = mode === 'write' ? instructions.trim().length > 0 : file !== null;
+  const hasContent = mode === 'write' ? instructions.trim().length > 0 : file !== null;
+  const canSave = labExists && hasContent && !saving;
 
   return (
     <Modal title="Upload Agent Instructions" onClose={onClose} width={520}>
       <p className="modal-subtitle">
         Define how the AI agent should guide students during this lab.
       </p>
+
+      {!labExists && (
+        <p className="modal-subtitle">Generate the lab on the Lab Tasks tab first; instructions are stored on the lab.</p>
+      )}
 
       <div className="modal-tab-switch">
         <button
@@ -67,7 +98,7 @@ export default function UploadAgentModal({ onClose }: Props) {
             <input
               ref={inputRef}
               type="file"
-              accept=".txt,.md,.pdf"
+              accept=".txt,.md"
               style={{ display: 'none' }}
               onChange={e => handleFiles(e.target.files)}
             />
@@ -81,7 +112,7 @@ export default function UploadAgentModal({ onClose }: Props) {
                 <div className="dropzone-icon">⬆</div>
                 <div className="dropzone-cta">Drag &amp; drop your instructions file</div>
                 <div className="dropzone-meta">or click to browse</div>
-                <div className="dropzone-hint">TXT, MD, PDF · Max 5 MB</div>
+                <div className="dropzone-hint">TXT or MD</div>
               </>
             )}
           </div>
@@ -96,14 +127,17 @@ export default function UploadAgentModal({ onClose }: Props) {
         </>
       )}
 
+      {error && <div className="status-line status-error" role="alert">{error}</div>}
+      {labExists && <p className="modal-subtitle">Saved instructions are used the next time the lab is generated.</p>}
+
       <div className="modal-footer">
         <button className="btn-outline" onClick={onClose}>Cancel</button>
         <button
           className="btn-primary"
           disabled={!canSave}
-          onClick={onClose}
+          onClick={() => void save()}
         >
-          Save Instructions
+          {saving ? 'Saving…' : 'Save Instructions'}
         </button>
       </div>
     </Modal>

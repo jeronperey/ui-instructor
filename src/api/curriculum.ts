@@ -120,6 +120,27 @@ export async function uploadMaterial(file: File): Promise<void> {
   await request(`/curriculum/${LAB_ID}/upload-material`, { method: 'POST', body: form });
 }
 
+export interface TypoIssue {
+  location: string;
+  type: 'typo' | 'inconsistency' | 'ambiguity' | 'factual';
+  suggestion: string;
+}
+
+/** Proofreads the spec, quiz and rubric. Does not change the lab. */
+export function checkTypos(): Promise<{ issues_found: number; issues: TypoIssue[] }> {
+  return request(`/curriculum/${LAB_ID}/check-typos`, { method: 'POST' });
+}
+
+/** Stores instructions as generation context; call generateLab afterwards to apply them. */
+export async function uploadInstructions(instructions: string): Promise<void> {
+  await postJson(`/curriculum/${LAB_ID}/upload-instructions`, { instructions });
+}
+
+/** Direct download URL for a PDF export (the agent sends it as an attachment). */
+export function exportUrl(kind: 'lab' | 'quiz' | 'rubric'): string {
+  return `${BASE}/curriculum/${LAB_ID}/export/${kind}.pdf`;
+}
+
 export function approveLab(): Promise<LabMaterial> {
   return postJson<LabMaterial>(`/curriculum/${LAB_ID}/approve`, { approved_by: INSTRUCTOR_ID, notes: '' });
 }
