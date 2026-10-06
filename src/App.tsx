@@ -114,6 +114,10 @@ export default function App() {
         <aside className={`left-panel${sidebarOpen ? '' : ' left-panel--collapsed'}`}>
           <div className="panel-section-label">Lab Material</div>
 
+          <button className="panel-btn panel-btn-ghost" onClick={() => setShowUploadMaterial(true)}>Upload Material</button>
+          <button className="panel-btn panel-btn-ghost" onClick={() => setShowUploadAgent(true)}>Customize Tutor Behavior</button>
+
+          {/* Materials list sits below the buttons so the buttons stay put as materials grow */}
           <div className="uploaded-file">
             {materialFile ? (
               <>
@@ -126,9 +130,6 @@ export default function App() {
               <div className="file-meta">No material uploaded</div>
             )}
           </div>
-
-          <button className="panel-btn panel-btn-ghost" onClick={() => setShowUploadMaterial(true)}>Upload Material</button>
-          <button className="panel-btn panel-btn-ghost" onClick={() => setShowUploadAgent(true)}>Customize Tutor Behavior</button>
         </aside>
 
         {/* Main */}
