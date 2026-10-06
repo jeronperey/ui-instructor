@@ -38,7 +38,7 @@ The curriculum designer keeps labs **in memory**: restarting it empties the lab 
 ```bash
 npx tsc -b && npx eslint src && npm run build
 ```
-There is no test runner yet. `npm run build` writes `dist/`, which is not ignored on `main` before this change set, so do not commit it.
+There is no test runner yet. `npm run build` writes `dist/`, which is gitignored.
 
 ## Contributing
 Fork, branch from `main`, and open a PR. Comment out (do not delete) features that are being deactivated. No styling work
