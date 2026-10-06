@@ -1,7 +1,9 @@
-// All API calls go through the Orchestrator — never to individual agents directly.
-// See INTERFACE_CONTRACT.md for the full endpoint reference.
-//
-// Set VITE_ORCHESTRATOR_URL=http://localhost:8000 in .env (copy from .env.example).
+// LEGACY: this file targets an orchestrator service that was never built (Week 3 notes),
+// and none of its functions are called by the UI. The architecture is now direct clients
+// per agent: see curriculum.ts, and an assessment client to follow.
+// The grade/submission functions below stay as a reference for the Student Submissions tab
+// until they are replaced; the activity and integrity functions belong to the deactivated
+// Student Activity / AI Overview tabs and are commented out.
 
 const BASE = import.meta.env.VITE_ORCHESTRATOR_URL ?? '';
 const LAB_ID = import.meta.env.VITE_LAB_ID ?? 'lab4';
@@ -96,10 +98,11 @@ export async function fetchDashboard(tab?: 'material' | 'activity' | 'grades' | 
 
 // ── Student Activity (polls every 10s per contract — v0.1) ──────────────────
 
-export async function fetchActivityTab() {
-  const data = await fetchDashboard('activity');
-  return data?.activity ?? null;
-}
+// Commented out: real-time activity is non-MVP and no service provides it.
+// export async function fetchActivityTab() {
+//   const data = await fetchDashboard('activity');
+//   return data?.activity ?? null;
+// }
 
 // ── Integrity analytics (feeds per-student integrity data) ──────────────────
 
@@ -114,9 +117,10 @@ export interface IntegrityAnalytics {
   per_student: StudentIntegrityData[];
 }
 
-export async function fetchIntegrityAnalytics(): Promise<IntegrityAnalytics | null> {
-  return get<IntegrityAnalytics>(`/orchestrator/integrity/analytics/lab/${LAB_ID}`);
-}
+// Commented out: belongs to the deactivated AI Overview tab.
+// export async function fetchIntegrityAnalytics(): Promise<IntegrityAnalytics | null> {
+//   return get<IntegrityAnalytics>(`/orchestrator/integrity/analytics/lab/${LAB_ID}`);
+// }
 
 // ── Submission detail ────────────────────────────────────────────────────────
 
