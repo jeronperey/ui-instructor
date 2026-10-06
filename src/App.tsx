@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './index.css';
+import { approveLab, generateLab, getLab, requestChanges, uploadMaterial } from './api/curriculum';
+import type { LabMaterial } from './api/curriculum';
 import MaterialPreview from './tabs/MaterialPreview';
 import LabQuizPreview from './tabs/LabQuizPreview';
 import StudentActivity from './tabs/StudentActivity';
@@ -30,10 +32,54 @@ export default function App() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Curriculum designer state, shared by the sidebar and the Lab Tasks / Lab Quiz tabs.
+  const [lab, setLab] = useState<LabMaterial | null>(null);
+  const [labBusy, setLabBusy] = useState(false);
+  const [labError, setLabError] = useState<string | null>(null);
+  const [materialFile, setMaterialFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    getLab()
+      .then(setLab)
+      .catch(e => setLabError(e instanceof Error ? e.message : 'Request failed'));
+  }, []);
+
+  /** Runs an agent call, stores the resulting lab, and reports whether it succeeded. */
+  async function runLabAction(action: () => Promise<LabMaterial>): Promise<boolean> {
+    setLabBusy(true);
+    setLabError(null);
+    try {
+      setLab(await action());
+      return true;
+    } catch (e) {
+      setLabError(e instanceof Error ? e.message : 'Request failed');
+      return false;
+    } finally {
+      setLabBusy(false);
+    }
+  }
+
+  function handleGenerate(title: string, learningObjectives: string[]) {
+    return runLabAction(() => generateLab({ title, learningObjectives, file: materialFile ?? undefined }));
+  }
+
+  function handleMaterialUploaded(file: File) {
+    setMaterialFile(file);
+    // With a lab already generated, store the PDF and regenerate so the material is applied.
+    if (lab) {
+      void runLabAction(async () => {
+        await uploadMaterial(file);
+        return generateLab({ title: lab.title, learningObjectives: lab.learning_objectives });
+      });
+    }
+  }
+
   function renderContent() {
     switch (activeTab) {
-      case 'tasks': return <MaterialPreview />;
-      case 'quiz': return <LabQuizPreview />;
+      case 'tasks':
+        return <MaterialPreview lab={lab} busy={labBusy} error={labError} onGenerate={handleGenerate} onApprove={() => runLabAction(approveLab)} />;
+      case 'quiz':
+        return <LabQuizPreview lab={lab} busy={labBusy} error={labError} onApprove={() => runLabAction(approveLab)} onRequestChanges={fb => runLabAction(() => requestChanges(fb))} />;
       case 'activity': return <StudentActivity onSelectStudent={setSelectedStudent} />;
       case 'grades': return <GradedSubmissions onSelectStudent={setSelectedStudent} />;
       case 'stats': return <Statistics />;
@@ -69,8 +115,16 @@ export default function App() {
           <div className="panel-section-label">Lab Material</div>
 
           <div className="uploaded-file">
-            <div className="file-name">Lab4_specification.pdf</div>
-            <div className="file-meta">Uploaded · 2.3 MB</div>
+            {materialFile ? (
+              <>
+                <div className="file-name">{materialFile.name}</div>
+                <div className="file-meta">Uploaded · {(materialFile.size / 1024).toFixed(0)} KB</div>
+              </>
+            ) : lab?.material_content ? (
+              <div className="file-name">Material uploaded</div>
+            ) : (
+              <div className="file-meta">No material uploaded</div>
+            )}
           </div>
 
           <button className="panel-btn panel-btn-ghost" onClick={() => setShowUploadMaterial(true)}>Upload Material</button>
@@ -100,7 +154,11 @@ export default function App() {
       </div>
     </div>
 
-    {showUploadMaterial && <UploadMaterialModal onClose={() => setShowUploadMaterial(false)} />}
+    {showUploadMaterial && <UploadMaterialModal
+      willRegenerate={lab !== null}
+      onUploaded={handleMaterialUploaded}
+      onClose={() => setShowUploadMaterial(false)}
+    />}
     {showUploadAgent && <UploadAgentModal onClose={() => setShowUploadAgent(false)} />}
     {selectedStudent && (
       <StudentDetailModal

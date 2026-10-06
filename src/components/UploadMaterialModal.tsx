@@ -2,16 +2,28 @@ import { useRef, useState } from 'react';
 import Modal from './Modal';
 
 interface Props {
+  /** True when a lab already exists, so uploading will regenerate it. */
+  willRegenerate: boolean;
+  onUploaded: (file: File) => void;
   onClose: () => void;
 }
 
-export default function UploadMaterialModal({ onClose }: Props) {
+export default function UploadMaterialModal({ willRegenerate, onUploaded, onClose }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // The curriculum designer only accepts PDFs.
   function handleFiles(files: FileList | null) {
-    if (files && files[0]) setFile(files[0]);
+    const picked = files?.[0];
+    if (!picked) return;
+    if (!picked.name.toLowerCase().endsWith('.pdf')) {
+      setError('Only PDF files are supported.');
+      return;
+    }
+    setError(null);
+    setFile(picked);
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -42,7 +54,7 @@ export default function UploadMaterialModal({ onClose }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf,.doc,.docx,.txt"
+          accept=".pdf"
           style={{ display: 'none' }}
           onChange={e => handleFiles(e.target.files)}
         />
@@ -57,10 +69,15 @@ export default function UploadMaterialModal({ onClose }: Props) {
             <div className="dropzone-icon">⬆</div>
             <div className="dropzone-cta">Drag &amp; drop your file here</div>
             <div className="dropzone-meta">or click to browse</div>
-            <div className="dropzone-hint">PDF, DOCX, TXT · Max 25 MB</div>
+            <div className="dropzone-hint">PDF only</div>
           </>
         )}
       </div>
+
+      {error && <div className="status-line status-error" role="alert">{error}</div>}
+      {willRegenerate && (
+        <p className="modal-subtitle">The lab will be regenerated with this material.</p>
+      )}
 
       {file && (
         <button
@@ -76,7 +93,7 @@ export default function UploadMaterialModal({ onClose }: Props) {
         <button
           className="btn-primary"
           disabled={!file}
-          onClick={onClose}
+          onClick={() => { if (file) onUploaded(file); onClose(); }}
         >
           Upload
         </button>
