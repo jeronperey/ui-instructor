@@ -2,10 +2,11 @@ import { useState } from 'react';
 import './index.css';
 import MaterialPreview from './tabs/MaterialPreview';
 import LabQuizPreview from './tabs/LabQuizPreview';
-import StudentActivity from './tabs/StudentActivity';
+// Deactivated per Week 6 meeting (re-enable by uncommenting here, in `tabs`, and in renderContent)
+// import StudentActivity from './tabs/StudentActivity';
 import GradedSubmissions from './tabs/GradedSubmissions';
 import Statistics from './tabs/Statistics';
-import AgentCollaboration from './tabs/AgentCollaboration';
+// import AgentCollaboration from './tabs/AgentCollaboration';
 import UploadMaterialModal from './components/UploadMaterialModal';
 import UploadAgentModal from './components/UploadAgentModal';
 import StudentDetailModal from './components/StudentDetailModal';
@@ -14,12 +15,12 @@ import LoginPage from './components/LoginPage';
 type Tab = 'tasks' | 'quiz' | 'activity' | 'grades' | 'stats' | 'agents';
 
 const tabs: { id: Tab; label: string }[] = [
-  { id: 'tasks', label: 'Lab Tasks Preview' },
-  { id: 'quiz', label: 'Lab Quiz Preview' },
-  { id: 'activity', label: 'Student Activity' },
-  { id: 'grades', label: 'Graded Submissions' },
+  { id: 'tasks', label: 'Lab Tasks' },
+  { id: 'quiz', label: 'Lab Quiz' },
+  // { id: 'activity', label: 'Student Activity' }, // deactivated
+  { id: 'grades', label: 'Student Submissions' },
   { id: 'stats', label: 'Statistics' },
-  { id: 'agents', label: 'AI Overview' },
+  // { id: 'agents', label: 'AI Overview' }, // deactivated
 ];
 
 export default function App() {
@@ -34,10 +35,10 @@ export default function App() {
     switch (activeTab) {
       case 'tasks': return <MaterialPreview />;
       case 'quiz': return <LabQuizPreview />;
-      case 'activity': return <StudentActivity onSelectStudent={setSelectedStudent} />;
+      // case 'activity': return <StudentActivity onSelectStudent={setSelectedStudent} />;
       case 'grades': return <GradedSubmissions onSelectStudent={setSelectedStudent} />;
       case 'stats': return <Statistics />;
-      case 'agents': return <AgentCollaboration />;
+      // case 'agents': return <AgentCollaboration />;
     }
   }
 
@@ -56,10 +57,11 @@ export default function App() {
           <span className="sidebar-toggle-bar" />
         </button>
         <div className="header-left">
-          <h1>Instructor Panel</h1>
-          <p>CSC 101 — Lab 4: Linked Lists</p>
+          <h1>AI Ed Innovations</h1>
+          {/* <p>CSC 101 — Lab 4: Linked Lists</p> */}
         </div>
-        <div className="status-pill">● Lab in session</div>
+        {/* Placeholder, not hooked up to anything
+        <div className="status-pill">● Lab in session</div> */}
       </header>
 
       {/* Body */}
